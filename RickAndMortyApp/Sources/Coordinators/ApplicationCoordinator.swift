@@ -1,3 +1,10 @@
+//
+//  ApplicationCoordinator.swift
+//  RickAndMortyApp
+//
+//  Created by hassan elshaer on 26/08/2025.
+//
+
 import UIKit
 
 final class ApplicationCoordinator {
