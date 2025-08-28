@@ -23,7 +23,7 @@ An iOS application built using **Swift, UIKit, SwiftUI, and MVVM (Clean Architec
 ## 📦 Installation & Running
 1. Clone the repository:
    ```bash
-   git clone https://github.com/hassanelshairr/RickAndMortyApp.git
+   git clone https://github.com/hassanelshairr/RickAndMortyAppMain.git
    cd rickandmorty-ios
 
 2. Open RickAndMortyApp.xcodeproj in Xcode.
