@@ -16,7 +16,7 @@ An iOS application built using **Swift, UIKit, SwiftUI, and MVVM (Clean Architec
 ## 🛠 Requirements
 - Xcode 15+
 - iOS 16+
-- Swift 5.9+
+- Swift 5+
 
 ---
 
