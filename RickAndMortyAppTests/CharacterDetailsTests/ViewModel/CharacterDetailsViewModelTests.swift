@@ -19,37 +19,22 @@ struct MockFetchCharacterDetailsUseCase: FetchCharacterDetailsUseCaseProtocol {
 
 struct CharacterDetailsViewModelTests {
     
+    // MARK: - Existing Tests
+    
     @Test("loadCharacter successfully updates character")
     func testLoadCharacterSuccess() async throws {
-        // Given
-        let dummyCharacter = RMCharacter(
-            id: 1,
-            name: "Morty Smith",
-            status: "Alive",
-            species: "Human",
-            type: "",
-            gender: "Male",
-            origin: RMLocationRef(name: "Earth", url: ""),
-            location: RMLocationRef(name: "Earth", url: ""),
-            image: "https://rickandmortyapi.com/api/character/avatar/2.jpeg",
-            episode: [],
-            url: "",
-            created: ""
-        )
+        let dummyCharacter = RMCharacter.dummy(id: 1, name: "Morty Smith", status: "Alive")
         
         let useCase = MockFetchCharacterDetailsUseCase(result: .success(dummyCharacter))
         let viewModel = CharacterDetailsViewModel(fetchCharacterDetailsUseCase: useCase, character: dummyCharacter)
         
-        // When
         await withCheckedContinuation { continuation in
             viewModel.loadCharacter(id: 1)
-            
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                 continuation.resume()
             }
         }
         
-        // Then
         #expect(viewModel.character?.name == "Morty Smith")
         #expect(viewModel.error == nil)
         #expect(viewModel.isLoading == false)
@@ -59,33 +44,56 @@ struct CharacterDetailsViewModelTests {
     func testLoadCharacterFailure() async throws {
         enum DummyError: Error { case failed }
         
-        let dummyCharacter = RMCharacter(
-            id: 1,
-            name: "Morty Smith",
-            status: "Alive",
-            species: "Human",
-            type: "",
-            gender: "Male",
-            origin: RMLocationRef(name: "Earth", url: ""),
-            location: RMLocationRef(name: "Earth", url: ""),
-            image: "https://rickandmortyapi.com/api/character/avatar/2.jpeg",
-            episode: [],
-            url: "",
-            created: ""
-        )
+        let dummyCharacter = RMCharacter.dummy(id: 1, name: "Morty Smith", status: "Alive")
         
         let useCase = MockFetchCharacterDetailsUseCase(result: .failure(DummyError.failed))
         let viewModel = CharacterDetailsViewModel(fetchCharacterDetailsUseCase: useCase, character: dummyCharacter)
         
-        // When
         viewModel.loadCharacter(id: 1)
+        try await Task.sleep(nanoseconds: 100_000_000)
         
-        try await Task.sleep(nanoseconds: 100_000_000) // 0.1s
-        
-        // Then
         #expect(viewModel.error != nil)
-        #expect(viewModel.character?.name == "Morty Smith") // stays unchanged
+        #expect(viewModel.character?.name == "Morty Smith")
         #expect(viewModel.isLoading == false)
     }
-
+        
+    @Test("initial state reflects injected character and accessors")
+    func testInitialState() async throws {
+        let dummy = RMCharacter.dummy(id: 42, name: "Rick Sanchez", status: "Dead")
+        let useCase = MockFetchCharacterDetailsUseCase(result: .success(dummy))
+        let viewModel = CharacterDetailsViewModel(fetchCharacterDetailsUseCase: useCase, character: dummy)
+        
+        #expect(viewModel.character?.id == 42)
+        #expect(viewModel.name == "Rick Sanchez")
+        #expect(viewModel.status == "Dead")
+        #expect(viewModel.species == "Human")
+        #expect(viewModel.gender == "Male")
+        #expect(viewModel.location == "Earth")
+        #expect(viewModel.imageURL?.absoluteString.contains("avatar/42") == true)
+        #expect(viewModel.error == nil)
+        #expect(viewModel.isLoading == false)
+    }
+    
+    @Test("loading sets isLoading true until completion")
+    func testLoadingStateToggles() async throws {
+        let dummy = RMCharacter.dummy(id: 99, name: "Summer Smith")
+        
+        struct DelayedUseCase: FetchCharacterDetailsUseCaseProtocol {
+            func execute(id: Int, completion: @escaping (Result<RMCharacter, Error>) -> Void) {
+                DispatchQueue.global().asyncAfter(deadline: .now() + 0.05) {
+                    completion(.success(.dummy(id: id, name: "Summer Smith")))
+                }
+            }
+        }
+        
+        let viewModel = CharacterDetailsViewModel(fetchCharacterDetailsUseCase: DelayedUseCase(), character: dummy)
+        
+        viewModel.loadCharacter(id: 99)
+        #expect(viewModel.isLoading == true)
+        
+        try await Task.sleep(nanoseconds: 100_000_000)
+        
+        #expect(viewModel.isLoading == false) // after completion
+        #expect(viewModel.character?.name == "Summer Smith")
+    }
 }
