@@ -13,12 +13,19 @@ extension CharacterListVC: UITableViewDataSource, UITableViewDelegate {
     
     /// Number of rows = number of characters
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        viewModel.characters.count
+        return viewModel.characters.count
     }
     
     /// Creates a cell for each row using SwiftUI's CharacterRowView
     func tableView(_ tableView: UITableView,
                    cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+
+        guard indexPath.row < viewModel.characters.count else {
+            let cell = UITableViewCell()
+            cell.selectionStyle = .none
+            return cell
+        }
+
         let character = viewModel.characters[indexPath.row]
         let cell = tableView.dequeueReusableCell(withIdentifier: "CharacterCell", for: indexPath)
         cell.backgroundColor = .clear
@@ -37,6 +44,7 @@ extension CharacterListVC: UITableViewDataSource, UITableViewDelegate {
     
     /// Handles row selection -> calls onSelect callback
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        guard indexPath.row < viewModel.characters.count else { return }
         onSelect(viewModel.characters[indexPath.row])
         tableView.deselectRow(at: indexPath, animated: true)
     }
